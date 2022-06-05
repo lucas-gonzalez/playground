@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Configuration;
 
 import dev.lucasgonzalez.playground.kafkaproducer.domain.FixedConfigs;
 import dev.lucasgonzalez.playground.kafkaproducer.domain.ProducerRunner;
+import io.micrometer.core.instrument.MeterRegistry;
 import reactor.core.scheduler.Schedulers;
 
 import java.util.HashMap;
@@ -29,9 +30,10 @@ public class AppConfig {
   }
 
   @Bean
-  ProducerRunner producerRunner(FixedConfigs fixedConfigs) {
+  ProducerRunner producerRunner(FixedConfigs fixedConfigs, MeterRegistry registry) {
     return new ProducerRunner(
       Schedulers.newBoundedElastic(50, 5, "producer-runner"),
-      fixedConfigs);
+      fixedConfigs,
+      registry);
   }
 }

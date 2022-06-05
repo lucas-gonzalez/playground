@@ -1,15 +1,20 @@
 package dev.lucasgonzalez.playground.kafkaproducer.domain;
 
+import java.time.Instant;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.apache.kafka.clients.producer.ProducerRecord;
 
+import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.MeterRegistry;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.scheduler.Scheduler;
@@ -26,9 +31,12 @@ public class ProducerRunner {
 
   private final FixedConfigs fixedConfigs;
 
-  public ProducerRunner(final Scheduler producerScheduler, final FixedConfigs fixedConfigs) {
+  private final MeterRegistry registry;
+
+  public ProducerRunner(final Scheduler producerScheduler, final FixedConfigs fixedConfigs, final MeterRegistry registry) {
     this.producerScheduler = producerScheduler;
     this.fixedConfigs = fixedConfigs;
+    this.registry = registry;
   }
 
   public Disposable run(final ProducerConfig config) {
@@ -43,12 +51,35 @@ public class ProducerRunner {
 
   private Flux<SenderResult<Long>> assembleProducer(ProducerConfig config) {
     final var sender = sender(config);
-    final var supplier = payloadSupplier(config.getPayloadBytes());
+    final var summary = metric(config);
     return sender.send(Flux.interval(config.getProductionInterval())
           .publishOn(producerScheduler)
-          .map(i -> SenderRecord.create(
-            new ProducerRecord<Long, byte[]>(config.getTopic(), i, supplier.get()), i)))
+          .map(record(config)))
+      .doOnNext(measure(summary))
       .doOnComplete(sender::close);
+  }
+
+  private Function<Long, SenderRecord<Long, byte[], Long>> record(ProducerConfig config) {
+    final var supplier = payloadSupplier(config.getPayloadBytes());
+    return i -> SenderRecord.create(
+        new ProducerRecord<Long, byte[]>(
+          config.getTopic(),
+          null,
+          Instant.now().toEpochMilli(),
+          i, supplier.get()),
+        i);
+  }
+
+  private Consumer<SenderResult<Long>> measure(final DistributionSummary summary) {
+    return r -> summary.record(Instant.now().toEpochMilli() - r.recordMetadata().timestamp());
+  }
+
+  private DistributionSummary metric(ProducerConfig config) {
+    return DistributionSummary.builder("reactor.kafka.producer.times")
+        .tag("name", config.getName())
+        .scale(100d)
+        .serviceLevelObjectives(95d, 99d)
+        .register(registry);
   }
 
   private Supplier<byte[]> payloadSupplier(final int payloadLength) {
