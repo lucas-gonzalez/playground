@@ -20,6 +20,7 @@ public class DetailHandler implements HandlerFunction<ServerResponse> {
   public Mono<ServerResponse> handle(final ServerRequest request) {
     var id = request.pathVariable("id");
     return Mono.just(runner.runningProducer(id).getConfiguration())
-        .flatMap(config -> ServerResponse.ok().bodyValue(config));
+        .flatMap(config -> ServerResponse.ok().bodyValue(config))
+        .onErrorResume(IllegalArgumentException.class, e -> ServerResponse.notFound().build());
   }
 }

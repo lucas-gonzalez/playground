@@ -68,7 +68,8 @@ public class ProducerRunner {
   }
 
   public RunningProducer runningProducer(String name) {
-    return runningProducers.get(name);
+    return Optional.ofNullable(runningProducers.get(name))
+      .orElseThrow(() -> new IllegalArgumentException());
   }
 
   public Collection<RunningProducer> runningProducers() {
