@@ -1,0 +1,113 @@
+version: "3"
+
+services:
+  gru:
+    image: confluentinc/cp-zookeeper:6.2.4
+    hostname: gru
+    container_name: gru
+    ports:
+    - 2181
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  kevin:
+    image: confluentinc/cp-server:6.2.4
+    hostname: kevin
+    container_name: kevin
+    depends_on:
+    - gru
+    ports:
+    - 9092
+    - 19092:19092
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: "gru:2181"
+      KAFKA_LISTENERS: INTERNAL://kevin:9092,EXTERNAL://127.0.0.1:19092
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kevin:9092,EXTERNAL://127.0.0.1:19092
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_METRIC_REPORTERS: io.confluent.metrics.reporter.ConfluentMetricsReporter
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR: 1
+      CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: kevin:9092
+      CONFLUENT_METRICS_REPORTER_ZOOKEEPER_CONNECT: gru:2181
+      CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS: 1
+      CONFLUENT_METRICS_ENABLE: "true"
+      CONFLUENT_SUPPORT_CUSTOMER_ID: "anonymous"
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+
+  stuart:
+    image: confluentinc/cp-server:6.2.4
+    hostname: stuart
+    container_name: stuart
+    depends_on:
+    - gru
+    ports:
+    - 9093
+    - 19093:19093
+    environment:
+      KAFKA_BROKER_ID: 2
+      KAFKA_ZOOKEEPER_CONNECT: "gru:2181"
+      KAFKA_LISTENERS: INTERNAL://stuart:9093,EXTERNAL://127.0.0.1:19093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://stuart:9093,EXTERNAL://127.0.0.1:19093
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_METRIC_REPORTERS: io.confluent.metrics.reporter.ConfluentMetricsReporter
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR: 1
+      CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: stuart:9093
+      CONFLUENT_METRICS_REPORTER_ZOOKEEPER_CONNECT: gru:2181
+      CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS: 1
+      CONFLUENT_METRICS_ENABLE: "true"
+      CONFLUENT_SUPPORT_CUSTOMER_ID: "anonymous"
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+
+  bob:
+    image: confluentinc/cp-server:6.2.4
+    hostname: bob
+    container_name: bob
+    depends_on:
+    - gru
+    ports:
+    - 9094
+    - 19094:19094
+    environment:
+      KAFKA_BROKER_ID: 3
+      KAFKA_ZOOKEEPER_CONNECT: "gru:2181"
+      KAFKA_LISTENERS: INTERNAL://bob:9094,EXTERNAL://127.0.0.1:19094
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://bob:9094,EXTERNAL://127.0.0.1:19094
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_METRIC_REPORTERS: io.confluent.metrics.reporter.ConfluentMetricsReporter
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR: 1
+      CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: bob:9094
+      CONFLUENT_METRICS_REPORTER_ZOOKEEPER_CONNECT: gru:2181
+      CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS: 1
+      CONFLUENT_METRICS_ENABLE: "true"
+      CONFLUENT_SUPPORT_CUSTOMER_ID: "anonymous"
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+
+  reactor-kafka-tester:
+    image: reactor-kafka-tester:latest
+    container_name: reactor-kafka-tester
+    hostname: reactor-kafka-tester
+    depends_on:
+    - bob
+    - kevin
+    - stuart
+    ports:
+    - 8080:8080
+
+  prometheus:
+    container_name: prometheus
+    hostname: prometheus
+    build:
+      context: prometheus
+      dockerfile: Dockerfile
+    ports:
+    - 9090:9090

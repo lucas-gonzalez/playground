@@ -1,0 +1,10 @@
+
+global:
+  scrape_interval: 10s
+  scrape_timeout: 5s
+
+scrape_configs:
+- job_name: 'spring-boot'
+  metrics_path: '/actuator/prometheus'
+  static_configs:
+  - targets: ['reactor-kafka-tester:8080']
