@@ -2,20 +2,14 @@ package dev.lucasgonzalez.playground.kafkaproducer.domain;
 
 import java.time.Instant;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import org.apache.kafka.clients.admin.AdminClient;
-import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.producer.ProducerRecord;
 
 import io.micrometer.core.instrument.MeterRegistry;
@@ -23,7 +17,6 @@ import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.kafka.KafkaClientMetrics;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 import reactor.kafka.sender.KafkaSender;
 import reactor.kafka.sender.SenderOptions;
@@ -40,45 +33,26 @@ public class ProducerRunner {
 
   private final MeterRegistry registry;
 
-  private final AdminClient adminClient;
-
   public ProducerRunner(
       final Scheduler producerScheduler,
       final FixedConfigs fixedConfigs,
-      final MeterRegistry registry,
-      final AdminClient adminClient) {
+      final MeterRegistry registry) {
     this.producerScheduler = producerScheduler;
     this.fixedConfigs = fixedConfigs;
     this.registry = registry;
-    this.adminClient = adminClient;
   }
 
   public Disposable run(final ProducerConfig config) {
     var runningProducer = new RunningProducer(
-      provisionTopic(config)
-        .flatMapMany(v -> assembleProducer(config))
+        assembleProducer(config)
+          .name("producer-publisher")
+          .tag("name", config.getName())
+          .metrics()
           .subscribeOn(producerScheduler)
           .subscribe(),
         config);
     runningProducers.put(config.getName(), runningProducer);
     return runningProducer.getSubscription();
-  }
-
-  private Mono<Void> provisionTopic(ProducerConfig config) {
-    return Mono.<Void>fromSupplier(() -> { 
-      try {
-        return adminClient.createTopics(
-          Collections.singleton(
-            new NewTopic(
-              config.getTopic(),
-              3,
-              (short) 2)))
-          .all()
-          .get(5, TimeUnit.SECONDS);
-      } catch (InterruptedException|ExecutionException|TimeoutException e) {
-        throw new RuntimeException(e);
-      }
-    });
   }
 
   private Flux<SenderResult<Long>> assembleProducer(ProducerConfig config) {

@@ -38,8 +38,7 @@ public class AppConfig {
     return new ProducerRunner(
       Schedulers.newBoundedElastic(50, 5, "producer-runner"),
       fixedConfigs,
-      registry,
-      adminClient);
+      registry);
   }
 
   @Bean
