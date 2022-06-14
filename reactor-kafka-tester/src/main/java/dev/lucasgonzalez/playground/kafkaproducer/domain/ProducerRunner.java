@@ -11,7 +11,6 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -19,8 +18,9 @@ import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.producer.ProducerRecord;
 
-import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.binder.kafka.KafkaClientMetrics;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -83,11 +83,16 @@ public class ProducerRunner {
 
   private Flux<SenderResult<Long>> assembleProducer(ProducerConfig config) {
     final var sender = sender(config);
-    final var summary = metric(config);
-    return sender.send(Flux.interval(config.getProductionInterval())
+    return sender
+    .send(Flux.interval(config.getProductionInterval())
           .publishOn(producerScheduler)
           .map(record(config)))
-      .doOnNext(measure(summary))
+      .doOnSubscribe(s -> 
+          sender.doOnProducer(producer -> {
+            var m = new KafkaClientMetrics(producer, Tags.of("name", config.getName()));
+            m.bindTo(registry);
+            return m;
+          }).subscribe())
       .doOnComplete(sender::close);
   }
 
@@ -100,18 +105,6 @@ public class ProducerRunner {
           Instant.now().toEpochMilli(),
           i, supplier.get()),
         i);
-  }
-
-  private Consumer<SenderResult<Long>> measure(final DistributionSummary summary) {
-    return r -> summary.record(Instant.now().toEpochMilli() - r.recordMetadata().timestamp());
-  }
-
-  private DistributionSummary metric(ProducerConfig config) {
-    return DistributionSummary.builder("reactor.kafka.producer.times")
-        .tag("name", config.getName())
-        .scale(100d)
-        .serviceLevelObjectives(95d, 99d)
-        .register(registry);
   }
 
   private Supplier<byte[]> payloadSupplier(final int payloadLength) {
