@@ -1,0 +1,41 @@
+name: Workflows Lint
+
+on:
+  push:
+    paths:
+      - .github/workflows/*.yaml
+    branches:
+      - main
+  pull_request:
+    paths:
+      - .github/workflows/*.yaml
+    branches:
+      - main
+
+env:
+  ACTION_LINT_VERSION_COMMIT: e4caae93a1bc24ab2e349236b6b389900e5a7914
+
+jobs:
+  run-linters:
+    name: Lint Workflows
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Cache Actionlint
+        uses: actions/cache@v2
+        continue-on-error: true
+        with:
+          path: ~/go/bin/actionlint
+          key: ${{ runner.os }}-actionlint-$ACTION_LINT_VERSION_COMMIT
+
+      - name: Install Actionlint
+        run: |
+          if [ ! -f ~/go/bin/actionlint ]; then
+            go install github.com/rhysd/actionlint/cmd/actionlint@$ACTION_LINT_VERSION_COMMIT
+          fi
+
+      - name: Check repository out
+        uses: actions/checkout@v2
+      
+      - name: Run Actionlint
+        run: actionlint
