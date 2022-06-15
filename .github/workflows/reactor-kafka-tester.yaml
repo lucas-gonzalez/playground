@@ -1,0 +1,26 @@
+name: "[reactor-kafka-tester] verify"
+
+on:
+  pull_request:
+    paths:
+      - reactor-kafka-tester/src
+      - reactor-kafka-tester/pom.xml
+    branches:
+      - main
+
+jobs:
+  maven-verify:
+    name: "[reactor-kafka-tester] Verify"
+    runs-on: ubuntu-20.04
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Maven Verify
+        run: mvn --batch-mode verify -f reactor-kafka-tester
