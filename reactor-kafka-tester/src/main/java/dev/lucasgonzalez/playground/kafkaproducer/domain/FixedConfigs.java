@@ -1,20 +1,20 @@
 package dev.lucasgonzalez.playground.kafkaproducer.domain;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 public class FixedConfigs {
 
-  private final Map<String, String> fixedConfigs;
+  private final Map<String, Object> fixedConfigs;
 
 
-  public FixedConfigs(Map<String,String> fixedConfigs) {
-    this.fixedConfigs = fixedConfigs;
-    
+  public FixedConfigs(Map<String, Object> fixedConfigs) {
+    this.fixedConfigs = new HashMap<>(fixedConfigs);
   }
 
 
-  public Map<String, String> getFixedConfigs() {
+  public Map<String, Object> getFixedConfigs() {
     return Collections.unmodifiableMap(fixedConfigs);
   }
 }

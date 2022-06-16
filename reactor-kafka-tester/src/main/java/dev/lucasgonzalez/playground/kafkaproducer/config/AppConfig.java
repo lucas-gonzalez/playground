@@ -7,8 +7,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import dev.lucasgonzalez.playground.kafkaproducer.domain.FixedConfigs;
+import dev.lucasgonzalez.playground.kafkaproducer.domain.KafkaSenderFactory;
 import dev.lucasgonzalez.playground.kafkaproducer.domain.ProducerRunner;
+import dev.lucasgonzalez.playground.kafkaproducer.domain.RecordFactory;
 import io.micrometer.core.instrument.MeterRegistry;
+import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 
 import java.util.HashMap;
@@ -25,7 +28,7 @@ public class AppConfig {
 
   @Bean
   FixedConfigs fixedConfigs() {
-    var fixedConfigs = new HashMap<String, String>();
+    var fixedConfigs = new HashMap<String, Object>();
     fixedConfigs.put(KEY_SERIALIZER_CLASS_CONFIG, LongSerializer.class.getCanonicalName());
     fixedConfigs.put(VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class.getCanonicalName());
     fixedConfigs.put(BOOTSTRAP_SERVERS_CONFIG, "kevin:9092,stuart:9093,bob:9094");
@@ -34,10 +37,32 @@ public class AppConfig {
   }
 
   @Bean
-  ProducerRunner producerRunner(FixedConfigs fixedConfigs, MeterRegistry registry, AdminClient adminClient) {
+  KafkaSenderFactory kafkaSenderFactory(FixedConfigs fixedConfigs) {
+    return new KafkaSenderFactory(fixedConfigs);
+  }
+
+  @Bean
+  Scheduler producerScheduler() {
+    return Schedulers.newBoundedElastic(50, 5, "producer-runner");
+  }
+
+  @Bean
+  RecordFactory recordFactory(Scheduler producerScheduler) {
+    return new RecordFactory(producerScheduler);
+  }
+
+  
+
+  @Bean
+  ProducerRunner producerRunner(
+    Scheduler producerScheduler,
+    KafkaSenderFactory kafkaSenderFactory,
+    RecordFactory recordFactory,
+    MeterRegistry registry) {
     return new ProducerRunner(
-      Schedulers.newBoundedElastic(50, 5, "producer-runner"),
-      fixedConfigs,
+      producerScheduler,
+      kafkaSenderFactory,
+      recordFactory,
       registry);
   }
 
