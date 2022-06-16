@@ -13,9 +13,9 @@ public class ProducerConfig {
 
   private final Integer payloadBytes;
 
-  private final Map<String, String> producerProperties;
+  private final Map<String, Object> producerProperties;
 
-  public ProducerConfig(String name, String topic, Duration productionInterval, Integer payloadBytes, Map<String, String> producerProperties) {
+  public ProducerConfig(String name, String topic, Duration productionInterval, Integer payloadBytes, Map<String, Object> producerProperties) {
     this.name = name;
     this.topic = topic;
     this.productionInterval = productionInterval;
@@ -44,7 +44,7 @@ public class ProducerConfig {
   }
 
 
-  public Map<String,String> getProducerProperties() {
+  public Map<String, Object> getProducerProperties() {
     return this.producerProperties;
   }
 
