@@ -20,7 +20,7 @@ Common tooling across different _modules_:
 * [Terraform](https://www.terraform.io/)
 * [GNU make](https://www.gnu.org/software/make/manual/make.html) _(pre-requisite)_
 
-Tooling marked as _pre-requisite_ currently needs to be manually installed. [GNU make](https://www.gnu.org/software/make/manual/make.html) will be moved into [asdf](https://asdf-vm.com/) in upcoming changes.
+Tooling marked as _pre-requisite_ currently needs to be manually installed. [GNU make](https://www.gnu.org/software/make/manual/make.html) will be moved onto [asdf](https://asdf-vm.com/) management in upcoming changes.
 
 ## Upcoming
 
