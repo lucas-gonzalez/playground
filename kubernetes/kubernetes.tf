@@ -21,17 +21,18 @@ resource "kind_cluster" "kubernetes" {
     api_version = "kind.x-k8s.io/v1alpha4"
 
     node {
-      role = "control-plane"
+      role  = "control-plane"
+      image = "kindest/node:v1.23.4"
     }
 
     node {
       role  = "worker"
-      image = "kindest/node:v1.24.0"
+      image = "kindest/node:v1.23.4"
     }
 
     node {
       role  = "worker"
-      image = "kindest/node:v1.24.0"
+      image = "kindest/node:v1.23.4"
     }
   }
 }
