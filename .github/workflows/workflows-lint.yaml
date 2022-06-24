@@ -13,8 +13,8 @@ on:
       - main
 
 jobs:
-  run-linters:
-    name: Lint Workflows
+  lint:
+    name: Lint Workflow Files
     runs-on: ubuntu-20.04
 
     steps:
