@@ -22,16 +22,17 @@ resource "kind_cluster" "kubernetes" {
 
     node {
       role = "control-plane"
+      image = "kindest/node:v1.23.4"
     }
 
     node {
       role  = "worker"
-      image = "kindest/node:v1.24.0"
+      image = "kindest/node:v1.23.4"
     }
 
     node {
       role  = "worker"
-      image = "kindest/node:v1.24.0"
+      image = "kindest/node:v1.23.4"
     }
   }
 }
