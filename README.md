@@ -8,7 +8,7 @@
 
 * `kubernetes`: [Kubernetes](https://kubernetes.io/) cluster setup using [Kind](https://kind.sigs.k8s.io/).
 * `prometheus`: [Prometheus](https://prometheus.io/) deployment on top of `kubernetes` using [Helm](https://helm.sh/).
-* `reactor-kafka-tester`: [Spring Boot](https://spring.io/projects/spring-boot) application to set out [Reactor Kafka](https://projectreactor.io/docs/kafka/release/reference/).
+* `reactor-kafka-tester`: [Spring Boot](https://spring.io/projects/spring-boot) application to test out [Reactor Kafka](https://projectreactor.io/docs/kafka/release/reference/).
 
 ## Tooling
 
