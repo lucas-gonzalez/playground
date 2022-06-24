@@ -14,7 +14,7 @@ terraform {
 }
 
 provider "kubernetes" {
-  config_path = "~/.kube/config"
+  config_path    = "~/.kube/config"
   config_context = "kind-playground"
 }
 
@@ -26,7 +26,7 @@ resource "kubernetes_namespace" "prometheus-namespace" {
   metadata {
     name = "prometheus"
     labels = {
-      role   = "prometheus"
+      role = "prometheus"
     }
   }
 }
